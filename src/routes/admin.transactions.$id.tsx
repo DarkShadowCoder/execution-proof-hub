@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Check, X, Ban, Paperclip, UserPlus, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Check, X, Ban, UserPlus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -199,16 +199,7 @@ function TransactionDetail() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {data.proofs.map((p: any) => (
-                  <a
-                    key={p.id}
-                    href={p.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm hover:bg-muted/50"
-                  >
-                    <Paperclip className="size-4 text-muted-foreground" />
-                    <span className="truncate">{p.file_name ?? p.file_url}</span>
-                  </a>
+                  <ProofPreview key={p.id} url={p.file_url} caption={p.file_name} />
                 ))}
               </div>
             )}
@@ -219,25 +210,48 @@ function TransactionDetail() {
             {data.execProofs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune preuve d'exécution enregistrée.</p>
             ) : (
-              <ul className="space-y-2 text-sm">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {data.execProofs.map((p: any) => (
-                  <li key={p.id} className="rounded-lg border border-border p-3">
-                    <a href={p.file_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                      {p.file_url}
-                    </a>
-                    <p className="text-xs text-muted-foreground">
-                      {p.description ?? "—"} · {dateTime(p.uploaded_at ?? p.created_at)}
-                    </p>
-                  </li>
+                  <ProofPreview
+                    key={p.id}
+                    url={p.file_url}
+                    caption={`${p.description ?? "Preuve d'exécution"} · ${dateTime(p.uploaded_at ?? p.created_at)}`}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
-            <div className="grid gap-2 sm:grid-cols-[2fr_2fr_auto]">
-              <Input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="URL du justificatif" />
-              <Input value={proofNote} onChange={(e) => setProofNote(e.target.value)} placeholder="Description (optionnel)" />
-              <Button disabled={!proofUrl || proofMut.isPending} onClick={() => proofMut.mutate()}>
-                Ajouter
-              </Button>
+            <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant="outline" className="gap-1.5" onClick={() => fileRef.current?.click()}>
+                  <Upload className="size-4" />
+                  {proofFile ? proofFile.name : "Choisir un fichier…"}
+                </Button>
+                <span className="text-xs text-muted-foreground">Image ou PDF · 10 Mo max</span>
+              </div>
+              {proofPreview ? (
+                <img
+                  src={proofPreview}
+                  alt="Aperçu de la preuve d'exécution"
+                  className="max-h-48 rounded-lg border border-border bg-muted/30 object-contain"
+                />
+              ) : null}
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <Input
+                  value={proofNote}
+                  onChange={(e) => setProofNote(e.target.value)}
+                  placeholder="Description (optionnel)"
+                />
+                <Button disabled={!proofFile || proofMut.isPending} onClick={() => proofMut.mutate()}>
+                  Ajouter
+                </Button>
+              </div>
             </div>
           </Card>
 
